@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Person Card Downloadable</title>
+
+<style>
+
+    body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+
+    .preview { margin-top: 20px; }
+
+    img { max-width: 100%; height: auto; }
+
+</style>
+
+</head>
+
+<body>
+
+<h1>Upload Person's Picture and Name</h1>
+
+<input type="file" id="imageUpload" accept="image/*"><br><br>
+
+<input type="text" id="personName" placeholder="Enter name"><br><br>
+
+<button id="downloadPdf">Download PDF</button>
+
+<div class="preview">
+
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <img id="previewImage" alt="Preview will appear here">
+
+    <p id="previewName"></p>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+
+const imageUpload = document.getElementById('imageUpload');
+
+const personNameInput = document.getElementById('personName');
+
+const previewImage = document.getElementById('previewImage');
+
+const previewName = document.getElementById('previewName');
+
+const downloadPdfBtn = document.getElementById('downloadPdf');
+
+
+
+// Background image URL (replace with your own)
+
+const backgroundImageUrl = 'https://via.placeholder.com/420x595.png?text=Background'; // A5 size approx.
+
+
+
+imageUpload.addEventListener('change', function(event) {
+
+    const file = event.target.files[0];
+
+    if (file) {
+
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+
+            previewImage.src = e.target.result;
+
+        };
+
+        reader.readAsDataURL(file);
+
+    }
+
+});
+
+
+
+personNameInput.addEventListener('input', function() {
+
+    previewName.textContent = personNameInput.value;
+
+});
+
+
+
+downloadPdfBtn.addEventListener('click', async function() {
+
+    const { jsPDF } = window.jspdf;
+
+    const doc = new jsPDF({ format: 'a5', unit: 'mm' });
+
+
+
+    const imgData = previewImage.src;
+
+    if (!imgData) {
+
+        alert('Please upload an image first.');
+
+        return;
+
+    }
+
+
+
+    const name = personNameInput.value || '';
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+
+
+    // Load background image
+
+    const bgImg = await fetch(backgroundImageUrl).then(res => res.blob()).then(blob => {
+
+        return new Promise(resolve => {
+
+            const reader = new FileReader();
+
+            reader.onload = () => resolve(reader.result);
+
+            reader.readAsDataURL(blob);
+
+        });
+
+    });
+
+
+
+    doc.addImage(bgImg, 'PNG', 0, 0, pageWidth, pageHeight);
+
+    doc.addImage(imgData, 'JPEG', 10, 20, pageWidth - 20, 60);
+
+    doc.setFontSize(16);
+
+    doc.text(name, pageWidth / 2, 90, { align: 'center' });
+
+
+
+    doc.save(`${name || 'person'}.pdf`);
+
+});
+
+</script>
+
+</body>
+
+</html>
