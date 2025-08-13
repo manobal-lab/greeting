@@ -1,12 +1,12 @@
 <?php
 $file = 'count.txt';
 
-// If file doesn't exist, create it with zero
+// Create the counter file if it doesn't exist
 if (!file_exists($file)) {
     file_put_contents($file, 0);
 }
 
-// If request is to increment
+// Increment the counter if requested
 if (isset($_GET['increment'])) {
     $count = (int) file_get_contents($file);
     $count++;
@@ -15,6 +15,6 @@ if (isset($_GET['increment'])) {
     exit;
 }
 
-// If request is to get the count
+// Just return the current count
 echo file_get_contents($file);
 ?>
