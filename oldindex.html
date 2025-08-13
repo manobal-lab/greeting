@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-RV0H3W7FHG"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-RV0H3W7FHG');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doctor's Card PDF</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+<style>
+    body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+    img { max-width: 100%; height: auto; }
+    #previewContainer {
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        overflow: hidden;
+        margin: 15px auto;
+        border: 3px solid #ccc;
+        background: #f0f0f0;
+    }
+    #previewContainer img {
+        max-width: 100%;
+        display: block;
+    }
+</style>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=G-RV0H3W7FHG"
+ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+<h1>Upload Doctor's Photo & Name</h1>
+<input type="file" id="imageUpload" accept="image/*"><br><br>
+<div id="previewContainer">
+    <img id="imagePreview" src="" alt="Preview">
+</div>
+<input type="text" id="doctorName" placeholder="Enter doctor's name"><br><br>
+<button id="downloadPdf">Download PDF</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+const imageUpload = document.getElementById('imageUpload');
+const doctorNameInput = document.getElementById('doctorName');
+const downloadPdfBtn = document.getElementById('downloadPdf');
+const imagePreview = document.getElementById('imagePreview');
+
+let cropper;
+const backgroundImageUrl = './background04-min.png?text=Background';
+
+imageUpload.addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imagePreview.src = e.target.result;
+            if (cropper) cropper.destroy();
+            cropper = new Cropper(imagePreview, {
+                viewMode: 1,
+                dragMode: 'move',
+                aspectRatio: 1,
+                autoCropArea: 1,
+                responsive: true,
+                zoomable: true,
+                background: false,
+                guides: false,
+                movable: true
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+downloadPdfBtn.addEventListener('click', async function() {
+    if (!cropper) {
+        alert('Please upload and adjust a photo first.');
+        return;
+    }
+
+    // Get cropped image as a square canvas
+    const croppedCanvas = cropper.getCroppedCanvas({
+        width: 800,
+        height: 800
+    });
+
+    // Make circular mask
+    const circleCanvas = document.createElement('canvas');
+    circleCanvas.width = 800;
+    circleCanvas.height = 800;
+    const ctx = circleCanvas.getContext('2d');
+    ctx.beginPath();
+    ctx.arc(400, 400, 400, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(croppedCanvas, 0, 0);
+
+    const circleImgData = circleCanvas.toDataURL('image/png');
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ format: 'a5', orientation: 'landscape', unit: 'mm' });
+
+    const name = doctorNameInput.value || '';
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    // Load background
+    const bgImg = await fetch(backgroundImageUrl)
+        .then(res => res.blob())
+        .then(blob => new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+        }));
+
+    doc.addImage(bgImg, 'PNG', 0, 0, pageWidth, pageHeight);
+
+    // Add circular image in PDF
+    const diameterMM = 67;
+    doc.addImage(circleImgData, 'PNG', 13, 22, diameterMM, diameterMM);
+
+    // Add doctor's name
+    doc.setFont('times', 'bold');
+    doc.setFontSize(28);
+    doc.setTextColor(178, 121, 44);
+    doc.text(name, 150, 70, { align: 'center' });
+
+     // 🔹 Google Tag Manager Event
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+        event: 'pdf_download',
+        doctor_name: name || 'unknown'
+    });
+
+    doc.save(`${name || 'doctor'}.pdf`);
+});
+</script>
+<div style="max-width:600px;margin:30px auto;font-family:Arial,sans-serif;font-size:14px;line-height:1.5;color:#333;text-align:left;">
+    <p><strong>Please include the “Dr.” prefix</strong> before every doctor’s name.</p>
+    <p>You may upload an existing photo, but make sure the doctor’s face is centred in the frame.</p>
+    <p>If clicking a fresh photo, kindly ensure good lighting and a plain background for best results.</p>
+</div>
+</body>
+</html>
