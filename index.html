@@ -87,15 +87,36 @@ downloadPdfBtn.addEventListener('click', async function() {
     canvas.height = diameterPx;
     const ctx = canvas.getContext('2d');
 
+    // Calculate proper scaling to avoid stretching
+    const imgAspect = img.width / img.height;
+    const canvasAspect = 1; // square
+    let sx, sy, sWidth, sHeight;
+
+    if (imgAspect > canvasAspect) {
+        // Image is wider — crop sides
+        sHeight = img.height;
+        sWidth = sHeight * canvasAspect;
+        sx = (img.width - sWidth) / 2;
+        sy = 0;
+    } else {
+        // Image is taller — crop top/bottom
+        sWidth = img.width;
+        sHeight = sWidth / canvasAspect;
+        sx = 0;
+        sy = (img.height - sHeight) / 2;
+    }
+
     ctx.beginPath();
     ctx.arc(diameterPx / 2, diameterPx / 2, diameterPx / 2, 0, Math.PI * 2);
     ctx.closePath();
     ctx.clip();
-    ctx.drawImage(img, 0, 0, diameterPx, diameterPx);
+
+    // Draw cropped image proportionally
+    ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, diameterPx, diameterPx);
 
     const circleImgData = canvas.toDataURL('image/png');
 
-    // Add circular image with margins: 5mm from left, 20mm from top
+    // Add circular image with margins: 13mm from left, 22mm from top
     doc.addImage(circleImgData, 'PNG', 13, 22, diameterMM, diameterMM);
 
     // Add name below image
@@ -103,12 +124,13 @@ downloadPdfBtn.addEventListener('click', async function() {
     doc.setFontSize(28);
     doc.setTextColor(178, 121, 44);
     doc.text(name, 150, 70, { align: 'center' });
-    
-    //doc.setFontSize(16);
-    //doc.text(name, 5 + (diameterMM / 2), 20 + diameterMM + 10, { align: 'center' });
 
+    // Save PDF
     doc.save(`${name || 'doctor'}.pdf`);
 
+    // Remove wait message and restore button
+    document.getElementById('waitMessage').remove();
+    downloadPdfBtn.style.display = 'inline-block';
 });
 </script>
 
