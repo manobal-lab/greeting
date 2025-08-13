@@ -135,6 +135,13 @@ downloadPdfBtn.addEventListener('click', async function() {
     doc.setTextColor(178, 121, 44);
     doc.text(name, 150, 70, { align: 'center' });
 
+     // 🔹 Google Tag Manager Event
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+        event: 'pdf_download',
+        doctor_name: name || 'unknown'
+    });
+
     doc.save(`${name || 'doctor'}.pdf`);
 });
 </script>
