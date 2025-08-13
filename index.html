@@ -24,7 +24,7 @@ const doctorNameInput = document.getElementById('doctorName');
 const downloadPdfBtn = document.getElementById('downloadPdf');
 
 // Background image
-const backgroundImageUrl = './background01-min.png?text=Background';
+const backgroundImageUrl = './background02-min.png?text=Background';
 
 let uploadedImageData = null;
 
@@ -93,7 +93,7 @@ downloadPdfBtn.addEventListener('click', async function() {
     doc.addImage(circleImgData, 'PNG', 13, 22, diameterMM, diameterMM);
 
     // Add name below image
-    doc.setFont('times', 'normal');
+    doc.setFont('times', 'bold');
     doc.setFontSize(28);
     doc.setTextColor(178, 121, 44);
     doc.text(name, 150, 70, { align: 'center' });
