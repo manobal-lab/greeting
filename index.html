@@ -93,7 +93,7 @@ downloadPdfBtn.addEventListener('click', async function() {
     doc.addImage(circleImgData, 'PNG', 13, 22, diameterMM, diameterMM);
 
     // Add name below image
-    doc.setFont('Georgia', 'normal');
+    doc.setFont('times', 'normal');
     doc.setFontSize(28);
     doc.setTextColor(187, 144, 45);
     doc.text(name, 150, 70, { align: 'center' });
