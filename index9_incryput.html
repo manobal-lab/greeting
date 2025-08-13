@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doctor's Card PDF (Obfuscated)</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+<style>
+    body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+    img { max-width: 100%; height: auto; }
+    #previewContainer {
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        overflow: hidden;
+        margin: 15px auto;
+        border: 3px solid #ccc;
+        background: #f0f0f0;
+    }
+    #previewContainer img {
+        max-width: 100%;
+        display: block;
+    }
+</style>
+</head>
+<body>
+
+<h1>Upload Doctor's Photo & Name</h1>
+<input type="file" id="imageUpload" accept="image/*"><br><br>
+<div id="previewContainer">
+    <img id="imagePreview" src="" alt="Preview">
+</div>
+<input type="text" id="doctorName" placeholder="Enter doctor's name"><br><br>
+<button id="downloadPdf">Download PDF</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>(function(){var _s='CihmdW5jdGlvbigpewpjb25zdCBlPWRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJpbWFnZVVwbG9hZCIpLAp0PWRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJkb2N0b3JOYW1lIiksCm49ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoImRvd25sb2FkUGRmIiksCmE9ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoImltYWdlUHJldmlldyIpOwpsZXQgbzsKY29uc3QgZD0iLi9iYWNrZ3JvdW5kMDMtbWluLnBuZz90ZXh0PUJhY2tncm91bmQiOwplLmFkZEV2ZW50TGlzdGVuZXIoImNoYW5nZSIsZnVuY3Rpb24oZSl7Y29uc3QgdD1lLnRhcmdldC5maWxlc1swXTtpZih0KXtjb25zdCBlPW5ldyBGaWxlUmVhZGVyO2Uub25sb2FkPWZ1bmN0aW9uKGUpe2Euc3JjPWUudGFyZ2V0LnJlc3VsdCxvJiZvLmRlc3Ryb3koKSxvPW5ldyBDcm9wcGVyKGEse3ZpZXdNb2RlOjEsZHJhZ01vZGU6Im1vdmUiLGFzcGVjdFJhdGlvOjEsYXV0b0Nyb3BBcmVhOjEscmVzcG9uc2l2ZTohMCx6b29tYWJsZTohMCxiYWNrZ3JvdW5kOiExLGd1aWRlczohMSxtb3ZhYmxlOiEwfSl9LGUucmVhZEFzRGF0YVVSTCh0KX19KSwKbi5hZGRFdmVudExpc3RlbmVyKCJjbGljayIsYXN5bmMgZnVuY3Rpb24oKXsKaWYoIW8pe2FsZXJ0KCJQbGVhc2UgdXBsb2FkIGFuZCBhZGp1c3QgYSBwaG90byBmaXJzdC4iKTtyZXR1cm59CmNvbnN0IGU9by5nZXRDcm9wcGVkQ2FudmFzKHt3aWR0aDo4MDAsaGVpZ2h0OjgwMH0pLHQ9ZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgiY2FudmFzIik7dC53aWR0aD04MDAsdC5oZWlnaHQ9ODAwO2NvbnN0IG49dC5nZXRDb250ZXh0KCIyZCIpO24uYmVnaW5QYXRoKCksbi5hcmMoNDAwLDQwMCw0MDAsMCwyKk1hdGguUEkpLG4uY2xvc2VQYXRoKCksbi5jbGlwKCksbi5kcmF3SW1hZ2UoZSwwLDApO2NvbnN0IGE9dC50b0RhdGFVUkwoImltYWdlL3BuZyIpLHtqc1BERjppfT13aW5kb3cuanNwZGYscj1uZXcgaSh7Zm9ybWF0OiJhNSIsb3JpZW50YXRpb246ImxhbmRzY2FwZSIsdW5pdDoibW0ifSksYz0oZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoIndhaXRNZXNzYWdlIil8fGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoInAiKSk7Yy5pZD0id2FpdE1lc3NhZ2UiLGMudGV4dENvbnRlbnQ9IlBsZWFzZSB3YWl0Li4uIixkb2N1bWVudC5ib2R5LmFwcGVuZENoaWxkKGMpO2NvbnN0IHM9YXdhaXQgZmV0Y2goZCkudGhlbihlPT5lLmJsb2IoKSkudGhlbihlPT5uZXcgUHJvbWlzZSh0PT57Y29uc3Qgbj1uZXcgRmlsZVJlYWRlcjtuLm9ubG9hZD0oKCk9PnQobi5yZXN1bHQpKSksbi5yZWFkQXNEYXRhVVJMKGUpfSkpO3IuYWRkSW1hZ2UocywiUE5HIiwwLDAsci5pbnRlcm5hbC5wYWdlU2l6ZS5nZXRXaWR0aCgpLHIuaW50ZXJuYWwucGFnZVNpemUuZ2V0SGVpZ2h0KCkpO2NvbnN0IGw9Njc7ci5hZGRJbWFnZShhLCJQTkciLDEzLDIyLGwsbCksci5zZXRGb250KCJ0aW1lcyIsImJvbGQiKSxyLnNldEZvbnRTaXplKDI4KSxyLnNldFRleHRDb2xvcigxNzgsMTIxLDQ0KTtjb25zdCBnPXQ9PnQmJnQudHJpbSgpP3Q6ImRvY3RvciI7ci50ZXh0KCh0LnZhbHVlfHwiIiksMTUwLDcwLHthbGlnbjoiY2VudGVyIn0pLHIuc2F2ZShgJHtnKHQudmFsdWUpfS5wZGZgKSxjLnJlbW92ZSgpfSk7Cn0pKCk7Cg==';(Function(atob(_s)))();})();</script>
+</body>
+</html>
