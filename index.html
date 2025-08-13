@@ -7,7 +7,6 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-RV0H3W7FHG');
 </script>
 <meta charset="UTF-8">
@@ -36,15 +35,20 @@
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=G-RV0H3W7FHG"
  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
 
 <h1>Upload Doctor's Photo & Name</h1>
 <input type="file" id="imageUpload" accept="image/*"><br><br>
 <div id="previewContainer">
     <img id="imagePreview" src="" alt="Preview">
 </div>
+
+<!-- 🔹 New: Sender Name Input -->
+<input type="text" id="senderName" placeholder="Enter ABM name"><br><br>
+
 <input type="text" id="doctorName" placeholder="Enter doctor's name"><br><br>
+
 <button id="downloadPdf">Download PDF</button>
+<button id="downloadImage">Download as Image</button>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -52,7 +56,9 @@
 <script>
 const imageUpload = document.getElementById('imageUpload');
 const doctorNameInput = document.getElementById('doctorName');
+const senderNameInput = document.getElementById('senderName');
 const downloadPdfBtn = document.getElementById('downloadPdf');
+const downloadImageBtn = document.getElementById('downloadImage');
 const imagePreview = document.getElementById('imagePreview');
 
 let cropper;
@@ -81,19 +87,13 @@ imageUpload.addEventListener('change', function(event) {
     }
 });
 
-downloadPdfBtn.addEventListener('click', async function() {
+async function generateCardCanvas() {
     if (!cropper) {
         alert('Please upload and adjust a photo first.');
-        return;
+        return null;
     }
 
-    // Get cropped image as a square canvas
-    const croppedCanvas = cropper.getCroppedCanvas({
-        width: 800,
-        height: 800
-    });
-
-    // Make circular mask
+    const croppedCanvas = cropper.getCroppedCanvas({ width: 800, height: 800 });
     const circleCanvas = document.createElement('canvas');
     circleCanvas.width = 800;
     circleCanvas.height = 800;
@@ -103,18 +103,11 @@ downloadPdfBtn.addEventListener('click', async function() {
     ctx.closePath();
     ctx.clip();
     ctx.drawImage(croppedCanvas, 0, 0);
-
     const circleImgData = circleCanvas.toDataURL('image/png');
 
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ format: 'a5', orientation: 'landscape', unit: 'mm' });
-
     const name = doctorNameInput.value || '';
+    const sender = senderNameInput.value || '';
 
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-
-    // Load background
     const bgImg = await fetch(backgroundImageUrl)
         .then(res => res.blob())
         .then(blob => new Promise(resolve => {
@@ -123,28 +116,69 @@ downloadPdfBtn.addEventListener('click', async function() {
             reader.readAsDataURL(blob);
         }));
 
-    doc.addImage(bgImg, 'PNG', 0, 0, pageWidth, pageHeight);
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = 1748; // A5 landscape px @150dpi approx
+    tempCanvas.height = 1240;
+    const ctx2 = tempCanvas.getContext('2d');
 
-    // Add circular image in PDF
-    const diameterMM = 67;
-    doc.addImage(circleImgData, 'PNG', 13, 22, diameterMM, diameterMM);
+    // Draw background
+    const bg = new Image();
+    bg.src = bgImg;
+    await new Promise(r => bg.onload = r);
+    ctx2.drawImage(bg, 0, 0, tempCanvas.width, tempCanvas.height);
 
-    // Add doctor's name
-    doc.setFont('times', 'bold');
-    doc.setFontSize(28);
-    doc.setTextColor(178, 121, 44);
-    doc.text(name, 150, 70, { align: 'center' });
+    // Draw circular photo
+    const profileImg = new Image();
+    profileImg.src = circleImgData;
+    await new Promise(r => profileImg.onload = r);
+    ctx2.drawImage(profileImg, 95, 167, 580, 580);
 
-     // 🔹 Google Tag Manager Event
-    window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push({
-        event: 'pdf_download',
-        doctor_name: name || 'unknown'
-    });
+    // Add doctor name
+    ctx2.font = "bold 70px Times";
+    ctx2.fillStyle = "rgb(178,121,44)";
+    ctx2.textAlign = "center";
+    ctx2.fillText(name, 1200, 550);
 
-    doc.save(`${name || 'doctor'}.pdf`);
+    // Add sender name
+    ctx2.font = "italic 37px Arial";
+    ctx2.fillStyle = "rgb(0,0,121)";
+    ctx2.fillText(`${sender}`, 1500, 1125);
+
+    return tempCanvas;
+}
+
+// PDF Download
+downloadPdfBtn.addEventListener('click', async function() {
+    const cardCanvas = await generateCardCanvas();
+    if (!cardCanvas) return;
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ format: 'a5', orientation: 'landscape', unit: 'mm' });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    doc.addImage(cardCanvas.toDataURL('image/png'), 'PNG', 0, 0, pageWidth, pageHeight);
+
+    const name = doctorNameInput.value || 'doctor';
+    window.dataLayer.push({ event: 'pdf_download', doctor_name: name });
+    doc.save(`${name}.pdf`);
+});
+
+// Image Download
+downloadImageBtn.addEventListener('click', async function() {
+    const cardCanvas = await generateCardCanvas();
+    if (!cardCanvas) return;
+
+    const name = doctorNameInput.value || 'doctor';
+    window.dataLayer.push({ event: 'image_download', doctor_name: name });
+
+    const link = document.createElement('a');
+    link.download = `${name}.png`;
+    link.href = cardCanvas.toDataURL('image/png');
+    link.click();
 });
 </script>
+
 <div style="max-width:600px;margin:30px auto;font-family:Arial,sans-serif;font-size:14px;line-height:1.5;color:#333;text-align:left;">
     <p><strong>Please include the “Dr.” prefix</strong> before every doctor’s name.</p>
     <p>You may upload an existing photo, but make sure the doctor’s face is centred in the frame.</p>
