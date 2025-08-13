@@ -4,133 +4,125 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Doctor's Card PDF</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
 <style>
     body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
     img { max-width: 100%; height: auto; }
-    #downloadCount { margin-top: 20px; font-weight: bold; }
+    #previewContainer {
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        overflow: hidden;
+        margin: 15px auto;
+        border: 3px solid #ccc;
+        background: #f0f0f0;
+    }
+    #previewContainer img {
+        max-width: 100%;
+        display: block;
+    }
 </style>
 </head>
 <body>
 
 <h1>Upload Doctor's Photo & Name</h1>
 <input type="file" id="imageUpload" accept="image/*"><br><br>
+<div id="previewContainer">
+    <img id="imagePreview" src="" alt="Preview">
+</div>
 <input type="text" id="doctorName" placeholder="Enter doctor's name"><br><br>
 <button id="downloadPdf">Download PDF</button>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
 const imageUpload = document.getElementById('imageUpload');
 const doctorNameInput = document.getElementById('doctorName');
 const downloadPdfBtn = document.getElementById('downloadPdf');
+const imagePreview = document.getElementById('imagePreview');
 
-// Background image
+let cropper;
 const backgroundImageUrl = './background03-min.png?text=Background';
-let uploadedImageData = null;
 
-// Handle image upload
 imageUpload.addEventListener('change', function(event) {
     const file = event.target.files[0];
     if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            uploadedImageData = e.target.result;
+            imagePreview.src = e.target.result;
+            if (cropper) cropper.destroy();
+            cropper = new Cropper(imagePreview, {
+                viewMode: 1,
+                dragMode: 'move',
+                aspectRatio: 1,
+                autoCropArea: 1,
+                responsive: true,
+                zoomable: true,
+                background: false,
+                guides: false,
+                movable: true
+            });
         };
         reader.readAsDataURL(file);
     }
 });
 
 downloadPdfBtn.addEventListener('click', async function() {
-    downloadPdfBtn.style.display = 'none';
-    let waitMsg = document.createElement('p');
-    waitMsg.id = 'waitMessage';
-    waitMsg.textContent = 'Please wait...';
-    document.body.appendChild(waitMsg);
-    
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ format: 'a5', orientation: 'landscape', unit: 'mm' });
-
-    if (!uploadedImageData) {
-        alert('Please upload a photo.');
+    if (!cropper) {
+        alert('Please upload and adjust a photo first.');
         return;
     }
+
+    // Get cropped image as a square canvas
+    const croppedCanvas = cropper.getCroppedCanvas({
+        width: 800,
+        height: 800
+    });
+
+    // Make circular mask
+    const circleCanvas = document.createElement('canvas');
+    circleCanvas.width = 800;
+    circleCanvas.height = 800;
+    const ctx = circleCanvas.getContext('2d');
+    ctx.beginPath();
+    ctx.arc(400, 400, 400, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(croppedCanvas, 0, 0);
+
+    const circleImgData = circleCanvas.toDataURL('image/png');
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ format: 'a5', orientation: 'landscape', unit: 'mm' });
 
     const name = doctorNameInput.value || '';
 
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
 
-    // Load background image
+    // Load background
     const bgImg = await fetch(backgroundImageUrl)
         .then(res => res.blob())
-        .then(blob => {
-            return new Promise(resolve => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.readAsDataURL(blob);
-            });
-        });
+        .then(blob => new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+        }));
 
     doc.addImage(bgImg, 'PNG', 0, 0, pageWidth, pageHeight);
 
-    // Create high-res circular image with canvas
-    const img = new Image();
-    img.src = uploadedImageData;
-    await img.decode();
-
-    const diameterMM = 67; // Circle size in mm
-    const dpi = 300; // For higher clarity
-    const diameterPx = Math.floor((diameterMM / 25.4) * dpi);
-
-    const canvas = document.createElement('canvas');
-    canvas.width = diameterPx;
-    canvas.height = diameterPx;
-    const ctx = canvas.getContext('2d');
-
-    // Calculate proper scaling to avoid stretching
-    const imgAspect = img.width / img.height;
-    const canvasAspect = 1; // square
-    let sx, sy, sWidth, sHeight;
-
-    if (imgAspect > canvasAspect) {
-        // Image is wider — crop sides
-        sHeight = img.height;
-        sWidth = sHeight * canvasAspect;
-        sx = (img.width - sWidth) / 2;
-        sy = 0;
-    } else {
-        // Image is taller — crop top/bottom
-        sWidth = img.width;
-        sHeight = sWidth / canvasAspect;
-        sx = 0;
-        sy = (img.height - sHeight) / 2;
-    }
-
-    ctx.beginPath();
-    ctx.arc(diameterPx / 2, diameterPx / 2, diameterPx / 2, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.clip();
-
-    // Draw cropped image proportionally
-    ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, diameterPx, diameterPx);
-
-    const circleImgData = canvas.toDataURL('image/png');
-
-    // Add circular image with margins: 13mm from left, 22mm from top
+    // Add circular image in PDF
+    const diameterMM = 67;
     doc.addImage(circleImgData, 'PNG', 13, 22, diameterMM, diameterMM);
 
-    // Add name below image
+    // Add doctor's name
     doc.setFont('times', 'bold');
     doc.setFontSize(28);
     doc.setTextColor(178, 121, 44);
     doc.text(name, 150, 70, { align: 'center' });
 
-    // Save PDF
     doc.save(`${name || 'doctor'}.pdf`);
-
-    // Remove wait message and restore button
-    document.getElementById('waitMessage').remove();
-    downloadPdfBtn.style.display = 'inline-block';
 });
 </script>
 
