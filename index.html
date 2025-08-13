@@ -16,8 +16,6 @@
 <input type="file" id="imageUpload" accept="image/*"><br><br>
 <input type="text" id="doctorName" placeholder="Enter doctor's name"><br><br>
 <button id="downloadPdf">Download PDF</button>
-<p id="pleaseWait">Please wait…</p>
-<div id="downloadCount">Total Downloads: 0</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -29,13 +27,6 @@ const downloadPdfBtn = document.getElementById('downloadPdf');
 // Background image
 const backgroundImageUrl = './background03-min.png?text=Background';
 let uploadedImageData = null;
-
-async function fetchDownloadCount() {
-    const response = await fetch('counter.php');
-    const count = await response.text();
-    downloadCountEl.textContent = `Total Downloads: ${count}`;
-}
-fetchDownloadCount();
 
 // Handle image upload
 imageUpload.addEventListener('change', function(event) {
@@ -118,14 +109,6 @@ downloadPdfBtn.addEventListener('click', async function() {
 
     doc.save(`${name || 'doctor'}.pdf`);
 
-    await fetch('counter.php?increment=1');
-    fetchDownloadCount();
-
-    // Reset button after delay
-    setTimeout(() => {
-        downloadPdfBtn.style.display = "inline-block";
-        pleaseWait.style.display = "none";
-    }, 1500);
 });
 </script>
 
