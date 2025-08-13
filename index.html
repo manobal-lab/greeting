@@ -41,6 +41,12 @@ imageUpload.addEventListener('change', function(event) {
 });
 
 downloadPdfBtn.addEventListener('click', async function() {
+    downloadPdfBtn.style.display = 'none';
+    let waitMsg = document.createElement('p');
+    waitMsg.id = 'waitMessage';
+    waitMsg.textContent = 'Please wait...';
+    document.body.appendChild(waitMsg);
+    
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ format: 'a5', orientation: 'landscape', unit: 'mm' });
 
