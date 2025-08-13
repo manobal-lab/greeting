@@ -118,6 +118,7 @@ downloadPdfBtn.addEventListener('click', async function() {
 
     doc.save(`${name || 'doctor'}.pdf`);
 
+    await fetch('counter.php?increment=1');
     fetchDownloadCount();
 
     // Reset button after delay
